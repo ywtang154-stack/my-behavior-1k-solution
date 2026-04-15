@@ -355,7 +355,7 @@ _CONFIGS = [
             repo_id="IliaLarchenko/behavior_224_rgb",
             base_config=DataConfig(
                 prompt_from_task=False,  # No text prompts for PI_BEHAVIOR
-                behavior_dataset_root="/content/behavior_224_rgb_subset_v2",
+                behavior_dataset_root="/content/drive/MyDrive/b1k_data/task1_only",
                 use_per_timestamp_norm=True,  # Enable per-timestamp normalization
             ),
             use_delta_joint_actions=True,
