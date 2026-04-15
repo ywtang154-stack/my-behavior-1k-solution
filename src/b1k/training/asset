@@ -333,7 +333,7 @@ class TrainConfig:
 _CONFIGS = [
     TrainConfig(
         name="pi_behavior_b1k_fast",
-        exp_name="openpi",
+        exp_name="ft_ckpt2_six_tasks_v1",
         project_name="B1K",
         model=pi_behavior_config.PiBehaviorConfig(
             action_horizon=30,
@@ -368,7 +368,7 @@ _CONFIGS = [
             decay_lr=1e-5,
         ),
         num_flow_samples=15,
-        weight_loader=weight_loaders.PiBehaviorWeightLoader("gs://openpi-assets/checkpoints/pi05_base/params"),
+        weight_loader=weight_loaders.PiBehaviorWeightLoader("/content/drive/MyDrive/behavior_models/checkpoint_2/checkpoint_2/params"),
         num_train_steps=200_000,
         assets_base_dir="/content/drive/MyDrive/b1k_outputs/assets",
         checkpoint_base_dir="/content/drive/MyDrive/b1k_outputs/checkpoints",
