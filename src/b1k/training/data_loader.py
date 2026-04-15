@@ -248,7 +248,7 @@ def create_behavior_data_loader(
         sharding=sharding,
         shuffle=shuffle,
         num_batches=num_batches,
-        num_workers=config.num_workers,
+        num_workers=0,
         seed=seed,
     )
     
