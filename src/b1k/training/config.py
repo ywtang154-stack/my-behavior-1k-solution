@@ -368,7 +368,7 @@ _CONFIGS = [
             decay_lr=1e-5,
         ),
         num_flow_samples=15,
-        weight_loader=weight_loaders.PiBehaviorWeightLoader("/content/drive/MyDrive/behavior_models/checkpoint_2/checkpoint_2/params"),
+        #weight_loader=weight_loaders.PiBehaviorWeightLoader("/content/drive/MyDrive/behavior_models/checkpoint_2/checkpoint_2/params"),
         num_train_steps=200_000,
         assets_base_dir="/content/drive/MyDrive/b1k_outputs/assets",
         checkpoint_base_dir="/content/drive/MyDrive/b1k_outputs/checkpoints",
