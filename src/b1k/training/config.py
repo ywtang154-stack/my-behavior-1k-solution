@@ -372,7 +372,7 @@ _CONFIGS = [
         num_train_steps=200_000,
         assets_base_dir="/content/drive/MyDrive/b1k_outputs/assets",
         checkpoint_base_dir="/content/drive/MyDrive/b1k_outputs/checkpoints",
-        num_workers=80,
+        num_workers=0,
         save_interval=500,
         keep_period=2000,
     ),
