@@ -251,117 +251,19 @@ class PiBehavior(_model.BaseModel):
         )
 
     def load_correlation_matrix(self, norm_stats: dict):
-        """Load full correlation matrix from normalization statistics and apply shrinkage.
-        
-        This should be called after model initialization when norm_stats are available.
-        Applies shrinkage regularization: S_reg = beta * S + (1-beta) * I for robustness.
-        
-        Args:
-            norm_stats: Dictionary containing normalization statistics (from normalize.load()),
-                       with 'actions' key containing NormStats with action_correlation_cholesky field.
-                       
-        Raises:
-            ValueError: If use_correlated_noise=True but correlation matrix is missing.
-            TypeError: If norm_stats structure is incorrect.
-        """
         if not self.use_correlated_noise:
-            logger.info("Correlated noise disabled in config, skipping correlation matrix loading")
             return
-        
-        # Validate norm_stats is a dict
-        if not isinstance(norm_stats, dict):
-            raise TypeError(
-                f"norm_stats must be a dict, got {type(norm_stats).__name__}. "
-                "Ensure norm_stats are loaded using openpi.shared.normalize.load()."
-            )
-        
-        # Check 'actions' key exists
-        if 'actions' not in norm_stats:
-            raise ValueError(
-                "use_correlated_noise=True but 'actions' key not found in norm_stats. "
-                f"Found keys: {list(norm_stats.keys())}. "
-                "Run compute_norm_stats.py with --correlation flag to generate correlation matrix."
-            )
-        
-        actions_stats = norm_stats['actions']
-        
-        # Extract correlation matrix (support both dict and attribute access for flexibility)
-        if isinstance(actions_stats, dict):
-            chol_matrix = actions_stats.get('action_correlation_cholesky')
-            access_method = "dict"
-        elif hasattr(actions_stats, 'action_correlation_cholesky'):
-            chol_matrix = actions_stats.action_correlation_cholesky
-            access_method = "attribute"
-        else:
-            raise TypeError(
-                f"norm_stats['actions'] has unexpected type {type(actions_stats).__name__} "
-                f"and cannot access 'action_correlation_cholesky'. "
-                "Ensure norm_stats are loaded using openpi.shared.normalize.load()."
-            )
-        
-        # Strict validation: correlation matrix must exist and be non-None
-        if chol_matrix is None:
-            raise ValueError(
-                "use_correlated_noise=True but 'action_correlation_cholesky' is None in norm_stats['actions']. "
-                "This means the correlation matrix was not computed during norm_stats generation. "
-                "Run compute_norm_stats.py with --correlation flag to generate correlation matrix."
-            )
-        
-        logger.info(f"Successfully accessed correlation matrix via {access_method} access")
-        
-        # Validate correlation matrix shape
-        expected_dim = self.action_horizon * self.action_dim
-        try:
-            L = jnp.array(chol_matrix)
-        except Exception as e:
-            raise ValueError(
-                f"Failed to convert action_correlation_cholesky to array: {e}. "
-                "The correlation matrix may be corrupted or in an invalid format."
-            )
-        
-        if L.ndim != 2 or L.shape[0] != L.shape[1]:
-            raise ValueError(
-                f"action_correlation_cholesky must be a square 2D matrix, got shape {L.shape}. "
-                f"Expected shape: ({expected_dim}, {expected_dim})"
-            )
-        
-        if L.shape[0] != expected_dim:
-            raise ValueError(
-                f"action_correlation_cholesky has wrong dimensions: {L.shape[0]}x{L.shape[0]}. "
-                f"Expected {expected_dim}x{expected_dim} (action_horizon={self.action_horizon} * action_dim={self.action_dim}). "
-                "This indicates the correlation matrix was computed for a different action space configuration."
-            )
-        
-        # Reconstruct covariance matrix from Cholesky
-        Sigma = L @ L.T
-        
-        # Apply shrinkage regularization: Σ_reg = beta * Σ + (1-beta) * I
-        beta = self.correlation_beta
-        logger.info(f"Applying shrinkage regularization with beta={beta:.2f}")
-        
-        Sigma_reg = beta * Sigma + (1 - beta) * jnp.eye(Sigma.shape[0])
-        
-        # Compute Cholesky decomposition of regularized covariance
-        try:
-            L_reg = jnp.linalg.cholesky(Sigma_reg)
-        except Exception as e:
-            raise RuntimeError(
-                f"Cholesky decomposition failed on regularized covariance: {e}. "
-                "This indicates the regularized correlation matrix is not positive definite. "
-                f"Current beta={beta:.2f}. Try decreasing correlation_beta closer to 0.0 for more shrinkage/regularization."
-            )
-        
-        # Update the Intermediate value
-        self.action_correlation_cholesky.value = L_reg
+    
+        actions_stats = norm_stats["actions"]
+        chol_matrix = (
+            actions_stats.get("action_correlation_cholesky")
+            if isinstance(actions_stats, dict)
+            else actions_stats.action_correlation_cholesky
+        )
+    
+        L = jnp.array(chol_matrix)
+        self.action_correlation_cholesky.value = L
         self.correlation_loaded = True
-        
-        logger.info(
-            f"✓ Loaded correlation matrix with shape {L_reg.shape} "
-            f"(beta={beta:.2f} shrinkage applied)"
-        )
-        logger.info(
-            f"  Memory usage: {L_reg.nbytes / 1024 / 1024:.2f} MB"
-        )
     
     def generate_correlated_noise(
         self, 
